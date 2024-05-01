@@ -53,7 +53,7 @@ namespace Example
 	[XmlInclude(typeof(AClass))]
 	[XmlInclude(typeof(BClass))]
 	[XmlSchemaProvider(nameof(GetSchema))]
-	public class BaseClass : IXmlSerializable
+	public abstract class BaseClass : IXmlSerializable
 	{
 		internal static XmlSchema Schema { get; } = new XmlSchema()
 		{
