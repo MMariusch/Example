@@ -58,7 +58,7 @@ namespace Example
 		internal static XmlSchema Schema { get; } = new XmlSchema()
 		{
 			Items = {
-			  new XmlSchemaComplexType() { Name = "BaseClass" },
+			  new XmlSchemaComplexType() { Name = "BaseClass", IsAbstract = true },
 			  new XmlSchemaComplexType() {
 				Name = "AClass", ContentModel = new XmlSchemaComplexContent() {
 				  Content = new XmlSchemaComplexContentExtension() { BaseTypeName = new XmlQualifiedName("BaseClass"), Attributes = {}, }, }, },
