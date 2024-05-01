@@ -19,14 +19,13 @@ namespace Example
 
 	public class TestClass
 	{
-		[XmlElement("AClass", typeof(AClass))]
 		List<BaseClass> objects = new List<BaseClass>();
 
 		public TestClass() { }
 
 		public void SaveToFile()
 		{
-			objects.Add(new AClass("someString"));
+			objects.Add(new BClass("someString"));
 			objects.Add(new AClass("anotherString"));
 			var xmlSerializer = new XmlSerializer(typeof(List<BaseClass>));
 			using (var writer = new StreamWriter("SaveList.xml"))
@@ -52,18 +51,45 @@ namespace Example
 	}
 
 	[XmlInclude(typeof(AClass))]
+	[XmlInclude(typeof(BClass))]
+	[XmlSchemaProvider(nameof(GetSchema))]
 	public class BaseClass : IXmlSerializable
 	{
+		internal static XmlSchema Schema { get; } = new XmlSchema()
+		{
+			Items = {
+			  new XmlSchemaComplexType() { Name = "BaseClass" },
+			  new XmlSchemaComplexType() {
+				Name = "AClass", ContentModel = new XmlSchemaComplexContent() {
+				  Content = new XmlSchemaComplexContentExtension() { BaseTypeName = new XmlQualifiedName("BaseClass"), Attributes = {}, }, }, },
+			  new XmlSchemaComplexType() {
+				Name = "BClass", ContentModel = new XmlSchemaComplexContent() {
+				  Content = new XmlSchemaComplexContentExtension() { BaseTypeName = new XmlQualifiedName("BaseClass"), Attributes = {}, }, }, },
+			}
+		};
+
 		public BaseClass() { }
-		public XmlSchema GetSchema() { return null; }
+
+		public XmlSchema GetSchema()
+		{
+			return null;
+		}
+
+		public static XmlQualifiedName GetSchema(XmlSchemaSet xs)
+		{
+			xs.Add(BaseClass.Schema);
+			return new XmlQualifiedName("BaseClass");
+		}
+
 		public virtual void ReadXml(XmlReader reader)
 		{
 			Console.Write("It shouldn't be triggered.");
 		}
 		public virtual void WriteXml(XmlWriter writer) { }
+
 	}
 
-	[Serializable]
+	[XmlSchemaProvider(nameof(GetSchema))]
 	public class AClass : BaseClass
 	{
 		private string _stringVar;
@@ -73,6 +99,11 @@ namespace Example
 		{
 			_stringVar = stringVar;
 		}
+		public static new XmlQualifiedName GetSchema(XmlSchemaSet xs)
+		{
+			xs.Add(BaseClass.Schema);
+			return new XmlQualifiedName("AClass");
+		}
 
 		public override void ReadXml(XmlReader reader)
 		{
@@ -81,7 +112,7 @@ namespace Example
 			reader.ReadStartElement();
 			if (anyElements)
 			{
-				_stringVar = reader.ReadElementContentAsString("StringVar", "");
+				_stringVar = reader.ReadElementContentAsString("AStringVar", "");
 				reader.ReadEndElement();
 			}
 		}
@@ -89,9 +120,42 @@ namespace Example
 		public override void WriteXml(XmlWriter writer)
 		{
 			writer.WriteAttributeString("xsi", "type", null, "AClass");
-			writer.WriteElementString("StringVar", _stringVar);
+			writer.WriteElementString("AStringVar", _stringVar);
 		}
 	}
 
+	[XmlSchemaProvider(nameof(GetSchema))]
+	public class BClass : BaseClass
+	{
+		private string _stringVar;
+		public string StringVar { get => _stringVar; private set => _stringVar = value; }
+		public BClass() { }
+		public BClass(string stringVar)
+		{
+			_stringVar = stringVar;
+		}
+		public static new XmlQualifiedName GetSchema(XmlSchemaSet xs)
+		{
+			xs.Add(BaseClass.Schema);
+			return new XmlQualifiedName("BClass");
+		}
 
+		public override void ReadXml(XmlReader reader)
+		{
+			reader.MoveToContent();
+			var anyElements = !reader.IsEmptyElement;
+			reader.ReadStartElement();
+			if (anyElements)
+			{
+				_stringVar = reader.ReadElementContentAsString("BStringVar", "");
+				reader.ReadEndElement();
+			}
+		}
+
+		public override void WriteXml(XmlWriter writer)
+		{
+			writer.WriteAttributeString("xsi", "type", null, "BClass");
+			writer.WriteElementString("BStringVar", _stringVar);
+		}
+	}
 }
